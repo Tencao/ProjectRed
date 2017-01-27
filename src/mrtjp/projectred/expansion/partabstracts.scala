@@ -6,21 +6,23 @@
 package mrtjp.projectred.expansion
 
 import codechicken.lib.data.{MCDataInput, MCDataOutput}
-import codechicken.lib.vec.{BlockCoord, Rotation, Vector3}
+import codechicken.lib.raytracer.CuboidRayTraceResult
+import codechicken.lib.vec.{Rotation, Vector3}
 import codechicken.multipart._
-import mrtjp.core.world.PlacementLib
 import mrtjp.projectred.api.{IConnectable, IScrewdriver}
-import mrtjp.projectred.core.{TFacePowerPart, TFaceConnectable, TSwitchPacket}
+import mrtjp.projectred.core.libmc.PRLib
+import mrtjp.projectred.core.{TFaceConnectable, TFacePowerPart, TSwitchPacket}
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraft.util.MovingObjectPosition
+import net.minecraft.util.{EnumFacing, EnumHand}
+import net.minecraft.util.math.BlockPos
 
 import scala.collection.JavaConversions._
 
-trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOcclusion with TFaceConnectable with TSwitchPacket with TIconHitEffects with TFacePowerPart
+trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOcclusionPart with TFaceConnectable with TSwitchPacket with TIconHitEffectsPart with TFacePowerPart
 {
-    def preparePlacement(player:EntityPlayer, pos:BlockCoord, side:Int, meta:Int)
+    def preparePlacement(player:EntityPlayer, pos:BlockPos, side:Int, meta:Int)
     {
         setSide(side^1)
         setRotation((Rotation.getSidedRotation(player, side)+2)%4)
@@ -70,17 +72,16 @@ trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOccl
     override def onPartChanged(part:TMultiPart)
     {
         if (!world.isRemote)
-        {
-            updateOutward()
-        }
+            if (updateOutward())
+                onMaskChanged()
     }
 
     override def onNeighborChanged()
     {
-        if (!world.isRemote)
-        {
+        if (!world.isRemote) {
             if (dropIfCantStay()) return
-            updateExternalConns()
+            if (updateExternalConns())
+                onMaskChanged()
         }
     }
 
@@ -88,9 +89,8 @@ trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOccl
     {
         super.onAdded()
         if (!world.isRemote)
-        {
-            updateInward()
-        }
+            if (updateInward())
+                onMaskChanged()
     }
 
     override def onRemoved()
@@ -101,8 +101,8 @@ trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOccl
 
     def canStay =
     {
-        val pos = new BlockCoord(tile).offset(side)
-        PlacementLib.canPlaceGateOnSide(world, pos.x, pos.y, pos.z, side^1)
+        val pos = tile.getPos.offset(EnumFacing.VALUES(side))
+        PRLib.canPlaceGateOnSide(world, pos, side^1)
     }
 
     def dropIfCantStay() =
@@ -117,7 +117,7 @@ trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOccl
 
     def drop()
     {
-        TileMultipart.dropItem(getItem, world, Vector3.fromTileEntityCenter(tile))
+        TileMultipart.dropItem(getItem, world, Vector3.fromTileCenter(tile))
         tile.remPart(this)
     }
 
@@ -125,13 +125,13 @@ trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOccl
 
     override def getDrops = Seq(getItem)
 
-    override def pickItem(hit:MovingObjectPosition) = getItem
+    override def pickItem(hit:CuboidRayTraceResult) = getItem
 
     override def getSlotMask = 1<<side
 
     override def solid(side:Int) = false
 
-    override def activate(player:EntityPlayer, hit:MovingObjectPosition, held:ItemStack):Boolean =
+    override def activate(player:EntityPlayer, hit:CuboidRayTraceResult, held:ItemStack, hand:EnumHand):Boolean =
     {
         if (held != null && doesRotate && held.getItem.isInstanceOf[IScrewdriver] && held.getItem.asInstanceOf[IScrewdriver].canUse(player, held))
         {
@@ -148,7 +148,8 @@ trait TFaceElectricalDevice extends TMultiPart with TCuboidPart with TNormalOccl
     def rotate()
     {
         setRotation((rotation+1)%4)
-        updateInward()
+        if (updateInward())
+            onMaskChanged()
         tile.markDirty()
         tile.notifyPartChange(this)
         sendOrientUpdate()

@@ -25,7 +25,7 @@ import org.lwjgl.input.Keyboard
 
 import scala.collection.mutable.ListBuffer
 
-class ItemPartPipe extends ItemCore("projectred.transportation.pipe") with TItemMultiPart
+class ItemPartPipe extends ItemCore with TItemMultiPart
 {
     setHasSubtypes(true)
     setCreativeTab(ProjectRedTransportation.tabTransportation)
@@ -35,7 +35,7 @@ class ItemPartPipe extends ItemCore("projectred.transportation.pipe") with TItem
       */
     override def newPart(item:ItemStack, player:EntityPlayer, world:World, pos:BlockPos, side:Int, vhit:Vector3) =
     {
-        val pdef = PipeDefs.values(item.getItemDamage)
+        val pdef = PipeDefs.fromMeta(item.getItemDamage)
         val p = MultiPartRegistry.loadPart(pdef.partname, null:NBTTagCompound).asInstanceOf[PayloadPipePart[_]]
         if (p != null) p.preparePlacement(side, item.getItemDamage)
         p
@@ -55,20 +55,24 @@ object PipeDefs extends ItemDefinition
     override type EnumVal = PipeVal
     override def getItem = ProjectRedTransportation.itemPartPipe
 
-    val BASIC = new PipeVal("pr_pipe", "basic", "rs")
-    val ROUTEDJUNCTION = new PipeVal("pr_rbasic", "routedjunc",
-        "routed", "unrouted", "routedconn", "unroutedconn")
-    val ROUTEDINTERFACE = new PipeVal("pr_rinterface", "routedint")
-    val ROUTEDCRAFTING = new PipeVal("pr_rcrafting", "routedcrafting") /** deprecated **/
-    val ROUTEDREQUEST = new PipeVal("pr_rrequest", "routedrequest")
-    val ROUTEDEXTENSION = new PipeVal("pr_rextension", "routedextension") /** deprecated **/
-    val ROUTEDFIREWALL = new PipeVal("pr_rfire", "routedfire")
-    val PRESSURETUBE = new PipeVal("pr_pt", Seq("pressuretube")++(0 to 15 map{"colour/colour_"+_}):_*)
-    val RESISTANCETUBE = new PipeVal("pr_rpt", "resistancetube")
-    val NETWORKVALVE = new PipeVal("pr_netvalve", "netvalve_blocked", "netvalve_in", "netvalve_out", "netvalve_inout")
-    val NETWORKLATENCY = new PipeVal("pr_netlatency", "netlatency")
+    /** Routed Pipes 0 - 63 **/
 
-    class PipeVal(val partname:String, val textures:String*) extends ItemDef(partname)
+    val BASIC = new PipeVal(0, "projectred-transporation:pipe", "basic", "rs")
+    val ROUTEDJUNCTION = new PipeVal(1, "projectred-transporation:routed_pipe", "routedjunc",
+        "routed", "unrouted", "routedconn", "unroutedconn")
+    val ROUTEDINTERFACE = new PipeVal(2, "projectred-transporation:interface_pipe", "routedint")
+    val ROUTEDREQUEST = new PipeVal(3, "projectred-transporation:request_pipe", "routedrequest")
+    val ROUTEDFIREWALL = new PipeVal(4, "projectred-transporation:firewall_pipe", "routedfire")
+
+    val NETWORKVALVE = new PipeVal(32, "projectred-transporation:netvalve_pipe", "netvalve_blocked", "netvalve_in", "netvalve_out", "netvalve_inout")
+    val NETWORKLATENCY = new PipeVal(33, "projectred-transporation:netlatency_pipe", "netlatency")
+
+    /** Pressure Tubes 64+ **/
+
+    val PRESSURETUBE = new PipeVal(64, "projectred-transporation:pressure_tube", Seq("pressuretube")++(0 to 15 map{"colour/colour_"+_}):_*)
+    val RESISTANCETUBE = new PipeVal(65, "projectred-transporation:resustance_tube", "resistancetube")
+
+    class PipeVal(override val meta:Int, val partname:String, val textures:String*) extends ItemDef(partname)
     {
         var sprites:Array[TextureAtlasSprite] = _
 
@@ -81,7 +85,7 @@ object PipeDefs extends ItemDefinition
     }
 }
 
-class ItemRoutingChip extends ItemCore("projectred.transportation.routingchip")
+class ItemRoutingChip extends ItemCore
 {
     setHasSubtypes(true)
     setCreativeTab(ProjectRedTransportation.tabTransportation)
@@ -182,8 +186,8 @@ object RoutingChipDefs extends ItemDefinition
 
     def getForStack(stack:ItemStack) =
     {
-        if (stack != null && stack.getItem.isInstanceOf[ItemRoutingChip] &&
-            values.isDefinedAt(stack.getItemDamage)) values(stack.getItemDamage)
+        if (stack != null && stack.getItem.isInstanceOf[ItemRoutingChip])
+            fromMeta(stack.getItemDamage)
         else null
     }
 
@@ -200,7 +204,8 @@ object RoutingChipDefs extends ItemDefinition
 
         def setCustomModelResourceLocations()
         {
-            ModelLoader.setCustomModelResourceLocation(getItem, meta, new ModelResourceLocation("projectred:mechanical/"+iconPath))
+            ModelLoader.setCustomModelResourceLocation(getItem, meta,
+                new ModelResourceLocation("projectred:mechanical/items", s"type=$iconPath"))
         }
 
         def isInterfaceChip = cType == ChipType.INTERFACE
@@ -216,20 +221,8 @@ object ChipType extends Enumeration
     val INTERFACE, CRAFTING = Value
 }
 
-class ItemRouterUtility extends ItemCore("projectred:routerUtility")
+class ItemRouterUtility extends ItemCore
 {
     setMaxStackSize(1)
     setCreativeTab(ProjectRedTransportation.tabTransportation)
-
-//    override def onItemRightClick(stack:ItemStack, w:World, player:EntityPlayer) =
-//    {
-//        super.onItemRightClick(stack, w, player)
-//    }
-//
-//    override def onItemUse(stack:ItemStack, player:EntityPlayer, w:World, par4:Int, par5:Int, par6:Int, par7:Int, par8:Float, par9:Float, par10:Float) =
-//    {
-//        true
-//    }
-//
-//    override def onItemUse(stack:ItemStack, playerIn:EntityPlayer, worldIn:World, pos:BlockPos, hand:EnumHand, facing:EnumFacing, hitX:Float, hitY:Float, hitZ:Float) = super.onItemUse(stack, playerIn, worldIn, pos, hand, facing, hitX, hitY, hitZ)
 }

@@ -73,13 +73,12 @@ class PowerConductor(val parent:IPowerConnectable, ids:Seq[Int])
     def voltage() =
     {
         val tick = parent.world.getTotalWorldTime
-        if ((tick&0xFFFF) != time)
-        {
-            time = (tick&0xFFFF).asInstanceOf[Int]
+        if ((tick & 0xFFFF) != time) {
+            time = (tick & 0xFFFF).asInstanceOf[Int]
             //calculate voltage
-            Iloc = 0.5D*Iflow
+            Iloc = 0.5D * Iflow
             Iflow = 0.0D
-            Vloc += 0.05D*Vflow*capacitance
+            Vloc += 0.05D * Vflow * capacitance
             Vflow = 0.0D
         }
         Vloc

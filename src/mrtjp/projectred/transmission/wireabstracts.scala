@@ -33,7 +33,7 @@ trait TWireCommons extends TMultiPart with TConnectableCommons with TPropagation
             WirePropagator.logCalculation()
 
             if (updateOutward()) {
-                sendConnUpdate()
+                onMaskChanged()
                 WirePropagator.propagateTo(this, FORCE)
             }
             else WirePropagator.propagateTo(this, RISING)
@@ -46,7 +46,7 @@ trait TWireCommons extends TMultiPart with TConnectableCommons with TPropagation
             if (dropIfCantStay()) return
             WirePropagator.logCalculation()
             if (updateExternalConns()) {
-                sendConnUpdate()
+                onMaskChanged()
                 WirePropagator.propagateTo(this, FORCE)
             }
             else WirePropagator.propagateTo(this, RISING)
@@ -57,7 +57,7 @@ trait TWireCommons extends TMultiPart with TConnectableCommons with TPropagation
     {
         super.onAdded()
         if (!world.isRemote) {
-            if (updateInward()) sendConnUpdate()
+            if (updateInward()) onMaskChanged()
             WirePropagator.propagateTo(this, RISING)
         }
     }
@@ -125,10 +125,9 @@ trait TWireCommons extends TMultiPart with TConnectableCommons with TPropagation
     def test(player:EntityPlayer) = false
 
     override def activate(player:EntityPlayer, hit:CuboidRayTraceResult, held:ItemStack, hand:EnumHand) =
-
     {
         //if (CommandDebug.WIRE_READING) debug(player) else
-        if (held != null && held.getItem == ProjectRedCore.itemWireDebugger) {
+        if (held != null && held.getItem == ProjectRedCore.itemMultimeter) {
             held.damageItem(1, player)
             player.swingArm(hand)
             test(player)
@@ -231,7 +230,6 @@ abstract class WirePart extends TMultiPart with TWireCommons with TFaceConnectab
     override def sendConnUpdate()
     {
         getWriteStreamOf(1).writeInt(connMap)
-        println("update mapped")
     }
 
     override def canConnectCorner(r:Int) = true
@@ -260,7 +258,7 @@ abstract class WirePart extends TMultiPart with TWireCommons with TFaceConnectab
 
     override def getType = getWireType.wireType
 
-    override def getStrength(player:EntityPlayer, hit:CuboidRayTraceResult) = 1/0.8f/30f
+    override def getStrength(player:EntityPlayer, hit:CuboidRayTraceResult) = 2/30f
 
     override def getSubParts = Seq(new IndexedCuboid6(0, WireBoxes.sBounds(getThickness)(side)))
 
@@ -343,7 +341,6 @@ abstract class FramedWirePart extends TMultiPart with TWireCommons with TCenterC
     override def sendConnUpdate()
     {
         getWriteStreamOf(1).writeByte(clientConnMap)
-        println("update mapped")
     }
 
     def sendMatUpdate()
@@ -369,8 +366,8 @@ abstract class FramedWirePart extends TMultiPart with TWireCommons with TCenterC
 
     override def getStrength(player:EntityPlayer, hit:CuboidRayTraceResult) =
     {
-        if (hasMaterial) Math.min(4, MicroMaterialRegistry.getMaterial(material).getStrength(player))
-        else 4
+        if (hasMaterial) Math.min(1.25f/30f, MicroMaterialRegistry.getMaterial(material).getStrength(player))
+        else 1.25f/30f
     }
 
     override def getItem = getWireType.makeFramedStack

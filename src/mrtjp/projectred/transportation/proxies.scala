@@ -8,6 +8,9 @@ import codechicken.multipart.{IPartFactory, MultiPartRegistry}
 import mrtjp.core.gui.GuiHandler
 import mrtjp.projectred.ProjectRedTransportation._
 import mrtjp.projectred.core.{Configurator, IProxy}
+import net.minecraft.client.renderer.block.model.ModelResourceLocation
+import net.minecraftforge.client.model.ModelLoader
+import net.minecraftforge.fml.common.registry.GameRegistry
 import net.minecraftforge.fml.relauncher.{Side, SideOnly}
 
 class TransportationProxy_server extends IProxy with IPartFactory
@@ -19,14 +22,18 @@ class TransportationProxy_server extends IProxy with IPartFactory
     override def preinit()
     {
         itemPartPipe = new ItemPartPipe
-        itemRoutingChip = new ItemRoutingChip
-        itemRouterUtility = new ItemRouterUtility
+        itemPartPipe.setUnlocalizedName("projectred.transportation.pipe")
+        GameRegistry.register(itemPartPipe.setRegistryName("pipe"))
 
-        MultiPartRegistry.registerParts(this, Array[String](
-            "pr_pipe", "pr_rbasic", "pr_rinterface",
-            "pr_rrequest", "pr_rfire",
-            "pr_pt", "pr_rpt", "pr_netvalve", "pr_netlatency"
-        ))
+        itemRoutingChip = new ItemRoutingChip
+        itemRoutingChip.setUnlocalizedName("projectred.transportation.routingChip")
+        GameRegistry.register(itemRoutingChip.setRegistryName("routing_chip"))
+
+        itemRouterUtility = new ItemRouterUtility
+        itemRouterUtility.setUnlocalizedName("projectred.transportation.routerUtility")
+        GameRegistry.register(itemRouterUtility.setRegistryName("router_utility"))
+
+        MultiPartRegistry.registerParts(this, PipeDefs.values.map{_.partname}.toArray)
     }
 
     override def init()
@@ -47,9 +54,7 @@ class TransportationProxy_server extends IProxy with IPartFactory
         case BASIC.partname => new BasicPipePart
         case ROUTEDJUNCTION.partname => new RoutedJunctionPipePart
         case ROUTEDINTERFACE.partname => new RoutedInterfacePipePart
-        //case ROUTEDCRAFTING.partname => new RoutedCraftingPipePartø
         case ROUTEDREQUEST.partname => new RoutedRequestPipePart
-        //case ROUTEDEXTENSION.partname => new RoutedExtensionPipePart
         case ROUTEDFIREWALL.partname => new RoutedFirewallPipe
         case PRESSURETUBE.partname => new PressureTube
         case RESISTANCETUBE.partname => new ResistanceTube
@@ -73,6 +78,9 @@ class TransportationProxy_client extends TransportationProxy_server
 
         for (i <- RoutingChipDefs.values)
             i.setCustomModelResourceLocations()
+
+        ModelLoader.setCustomModelResourceLocation(itemRouterUtility, 0,
+            new ModelResourceLocation("projectred:mechanical/tools", "type=router_utility"))
     }
 
     @SideOnly(Side.CLIENT)

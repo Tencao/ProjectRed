@@ -415,14 +415,14 @@ object PipeRSHighlightRenderer extends IMicroHighlightRenderer
     override def renderHighlight(player:EntityPlayer, hit:RayTraceResult, mcrFactory:CommonMicroFactory, size:Int, material:Int):Boolean =
     {
         if (mcrFactory.getFactoryID != 3 || size != 1 || player.isSneaking) return false
-        val tile = BlockMultipart.getTile(player.worldObj, hit.blockPos)
+        val tile = BlockMultipart.getTile(player.worldObj, hit.getBlockPos)
         if (tile == null) return false
 
         MicroMaterialRegistry.getMaterial(material) match
         {
             case b:BlockMicroMaterial if b.state.getBlock == Blocks.REDSTONE_BLOCK =>
                 tile.partList(hit.asInstanceOf[PartRayTraceResult].partIndex) match {
-                    case p:TRedstonePipe if !p.material =>
+                    case p:TRedstonePipe if !p.hasRedstone =>
                         RenderPipe.renderRSMicroHighlight(p, CCRenderState.instance())
                         true
                     case _ => false
@@ -477,7 +477,7 @@ object PipeItemRenderer extends IItemRenderer with IPerspectiveAwareModel
 
     def renderWireInventory(meta:Int, x:Float, y:Float, z:Float, scale:Float, ccrs:CCRenderState)
     {
-        val pdef = PipeDefs.values(meta)
+        val pdef = PipeDefs.fromMeta(meta)
         if (pdef == null) return
         TextureUtils.bindBlockTexture()
         ccrs.reset()

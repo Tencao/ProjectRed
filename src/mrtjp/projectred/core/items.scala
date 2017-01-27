@@ -13,7 +13,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world.IBlockAccess
 import net.minecraftforge.client.model.ModelLoader
 
-abstract class ItemCraftingDamage(registryName:String) extends ItemCore(registryName)
+abstract class ItemCraftingDamage extends ItemCore
 {
     setMaxStackSize(1)
     setNoRepair()
@@ -34,13 +34,13 @@ abstract class ItemCraftingDamage(registryName:String) extends ItemCore(registry
         }
 }
 
-class ItemDrawPlate extends ItemCraftingDamage("projectred:drawPlate")
+class ItemDrawPlate extends ItemCraftingDamage
 {
     setMaxDamage(512)
     setCreativeTab(ProjectRedCore.tabCore)
 }
 
-class ItemPart extends ItemCore("projectred:itemResource")
+class ItemPart extends ItemCore
 {
     setCreativeTab(ProjectRedCore.tabCore)
     setHasSubtypes(true)
@@ -52,7 +52,7 @@ class ItemPart extends ItemCore("projectred:itemResource")
     }
 
     override def getUnlocalizedName(stack: ItemStack):String = {
-        val col = PartDefs.getEnumFromMeta(stack.getItemDamage)
+        val col = PartDefs.fromMeta(stack.getItemDamage)
         if (col != null) getUnlocalizedName() + "." + col.name
         else super.getUnlocalizedName(stack)
     }
@@ -154,14 +154,14 @@ object PartDefs extends ItemDefinition
         def setCustomModelResourceLocations()
         {
             ModelLoader.setCustomModelResourceLocation(getItem, meta,
-                new ModelResourceLocation("projectred:base/itemResource", "type="+name))
+                new ModelResourceLocation("projectred:base/items", "type="+name))
         }
 
         override def name = iconName
     }
 }
 
-class ItemScrewdriver extends ItemCore("projectred:screwdriver") with IScrewdriver
+class ItemScrewdriver extends ItemCore with IScrewdriver
 {
     setMaxStackSize(1)
     setMaxDamage(128)
@@ -178,7 +178,7 @@ class ItemScrewdriver extends ItemCore("projectred:screwdriver") with IScrewdriv
     }
 }
 
-class ItemWireDebugger extends ItemCore("projectred:multimeter")
+class ItemMultimeter extends ItemCore
 {
     setMaxStackSize(1)
     setMaxDamage(256)

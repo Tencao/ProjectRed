@@ -11,7 +11,7 @@ import codechicken.lib.render.state.GlStateManagerHelper
 import codechicken.lib.render.state.GlStateManagerHelper.State
 import codechicken.lib.util.ItemUtils
 import codechicken.lib.vec._
-import mrtjp.core.block.{ItemBlockCore, MTBlockTile, MultiTileBlock}
+import mrtjp.core.block.{MTBlockTile, MultiTileBlock}
 import mrtjp.core.inventory.{IInvWrapperRegister, InvWrapper, TInventory}
 import mrtjp.core.item.ItemKey
 import mrtjp.core.world.WorldLib
@@ -21,24 +21,24 @@ import net.minecraft.block.SoundType
 import net.minecraft.block.material.Material
 import net.minecraft.block.state.IBlockState
 import net.minecraft.client.Minecraft
+import net.minecraft.client.renderer.GlStateManager._
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer
 import net.minecraft.entity.player.EntityPlayer
 import net.minecraft.inventory.{IInventory, ISidedInventory}
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NBTTagCompound
-import net.minecraft.util.{BlockRenderLayer, EnumBlockRenderType, EnumFacing}
-import org.lwjgl.opengl.GL11._
+import net.minecraft.util.EnumFacing
+import net.minecraft.util.math.BlockPos
+import net.minecraft.world.World
 
-class BlockBarrel extends MultiTileBlock("projectred.exploration.barrel", "barrel", Material.WOOD)
+class BlockBarrel extends MultiTileBlock(Material.WOOD)
 {
     setHardness(2.0F)
     setSoundType(SoundType.WOOD)
     setCreativeTab(ProjectRedExploration.tabExploration)
-    new ItemBlockCore(this)
-    //TODO Remove on MultiTile rewrite
-    override def getRenderType(state: IBlockState) = EnumBlockRenderType.MODEL
 
-    override def canRenderInLayer(state: IBlockState, layer: BlockRenderLayer) = layer == BlockRenderLayer.SOLID
+    override def getPlayerRelativeBlockHardness(state:IBlockState, player:EntityPlayer, world:World, pos:BlockPos) =
+        net.minecraftforge.common.ForgeHooks.blockStrength(state, player, world, pos)
 }
 
 class TileBarrel extends MTBlockTile with TInventory with ISidedInventory
@@ -407,24 +407,24 @@ object RenderBarrel extends TileEntitySpecialRenderer[TileBarrel] //with TCubeMa
             )
 
             GlStateManagerHelper.pushStates(State.GL_ALPHA_TEST, State.GL_BLEND, State.GL_LIGHTING)
-            glDisable(GL_BLEND)
-            glDisable(GL_LIGHTING)
-            glColor4d(1, 1, 1, 1)
+            disableBlend()
+            disableLighting()
+            color(1, 1, 1, 1)
 
-            glPushMatrix()
+            pushMatrix()
             new TransformationList(faceT, itemT, finalT).glApply()
             Minecraft.getMinecraft.getRenderItem.renderItemAndEffectIntoGUI(stack, 0,0)
-            glPopMatrix()
+            popMatrix()
 
-            glPushMatrix()
+            pushMatrix()
             new TransformationList(faceT, textT, finalT).glApply()
             GuiDraw.drawString(text, 0, 0, 0xFFFFFFFF, false)
-            glPopMatrix()
+            popMatrix()
 
-            glPushMatrix()
+            pushMatrix()
             new TransformationList(faceT, labelT, finalT).glApply()
             GuiDraw.drawString(label, 0, 0, 0xFFFFFFFF, false)
-            glPopMatrix()
+            popMatrix()
 
             GlStateManagerHelper.popState()
         }
